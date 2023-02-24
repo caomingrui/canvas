@@ -1,0 +1,10 @@
+.idea
+/node_modules
+/dist
+/package-lock.json
+.git
+.history
+npm-debug.log
+/.vscode
+/docker/dist
+yarn-error.log
