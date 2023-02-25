@@ -14,7 +14,11 @@
     const ctx = canvas.getContext('2d')
     let lineStatus = false;
     let selectAreaIndex = -1, selectPointIndex = -1, areas = [], copyAreas = [];
-    let downx, downy, isMouseDown = false, pointMouseMoveState = false;
+    let downx, downy, isMouseDown = false,
+        // 选中移动
+        pointMouseMoveState = false,
+        // 是否按下 防止生成多个点
+        isPointMouseDownState = false;
 
     canvas.addEventListener('mousedown', (event) => {
         const x = event.clientX - rect.left;
@@ -22,23 +26,34 @@
         let area;
         downx = x;
         downy = y;
-
         // 闭合后 选取areas移动
         if (!lineStatus) {
-            cleanCanvas({ ctx, canvas });
-            const index = isInConstituency(ctx, areas, x, y);
-            if (index != -1) {
+            // 是否是路径上的节点
+            const { areaIndex, pointIndex } = findPointIndex(ctx, areas, x, y);
+            if (areaIndex != -1) {
                 isMouseDown = true;
-                selectAreaIndex = index;
+                selectAreaIndex = areaIndex;
                 copyAreas = areas;
-
-                const pointIndex = clickPointIndex(x, y, areas[index]);
-                if (pointIndex != -1) {
-                    selectPointIndex = pointIndex;
-                    pointMouseMoveState = true;
-                }
+                selectPointIndex = pointIndex;
+                pointMouseMoveState = true;
                 return;
-            };
+            }
+            else {
+                // 是否选中图层
+                cleanCanvas({ ctx, canvas });
+                const index = isInConstituency(ctx, areas, x, y);
+                if (index != -1) {
+                    isMouseDown = true;
+                    selectAreaIndex = index;
+                    copyAreas = areas;
+                    const pointIndex = clickPointIndex(x, y, areas[index]);
+                    if (pointIndex != -1) {
+                        selectPointIndex = pointIndex;
+                        pointMouseMoveState = true;
+                    }
+                    return;
+                }
+            }
         }
 
         // 闭合新建 area 内容
@@ -53,15 +68,18 @@
 
         // 选中是否为路径上的节点
         const index = clickPointIndex(x, y, area);
-        area.add({ x, y, w: 3, h: 3 });
-        if (index == -1) {
+        cleanCanvas({ ctx, canvas });
+        if (index === -1) {
+            area.add({ x, y, w: 3, h: 3 });
             isMouseDown = true;
-            drawAll(ctx, areas);
         }
         else {
+            area.isCloseState = true;
+            area.closePointIndex = index;
             isMouseDown = false;
             lineStatus = false;
         }
+        drawAll(ctx, areas);
     })
 
 
@@ -75,6 +93,7 @@
         copyAreas = JSON.parse(JSON.stringify(areas))
         cleanCanvas({ ctx, canvas });
 
+        // 拖动点
         if (pointMouseMoveState) {
             const { points } = copyAreas[selectAreaIndex];
             const oldPointsItem = copyAreas[selectAreaIndex].points[selectPointIndex]
@@ -95,6 +114,7 @@
         }
         // 绘制路径
         else {
+            isPointMouseDownState = true;
             drawAll(ctx, areas.map((res, ind) => {
                 if (ind === areas.length - 1) {
                     return { ...res, points: res.points.concat({x,y,w: 3, h: 3}) }
@@ -106,7 +126,7 @@
 
     canvas.addEventListener('mouseup', (event) => {
         if (!isMouseDown) return;
-
+        // 拖动
         if (!lineStatus) {
             areas = copyAreas;
             isMouseDown = false;
@@ -116,10 +136,14 @@
             selectPointIndex = -1;
             return;
         }
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        const points = (areas.length? areas[areas.length - 1]: areas).points;
-        points.push({ x, y, w: 3, h: 3 })
+        // const x = event.clientX - rect.left;
+        // const y = event.clientY - rect.top;
+        // const points = (areas.length? areas[areas.length - 1]: areas).points;
+        // // if (isPointMouseDownState) {
+        // //     points.push({ x, y, w: 3, h: 3 })
+        // //     isPointMouseDownState = false;
+        // // }
+
         cleanCanvas({ ctx, canvas });
         drawAll(ctx, areas);
     })
@@ -142,6 +166,22 @@
         }
     });
 
+    function findPointIndex(ctx, areas, x, y) { // 找到当前坐标在哪个区域的哪个坐标点上，并将两个下标返回
+        let areaIndex = -1;
+        let pointIndex = -1;
+        areas.forEach((a, i) => {
+            if (areaIndex >= 0) return;
+            const index = clickPointIndex(x, y, a);
+            if (index >= 0) {
+                areaIndex = i;
+                pointIndex = index;
+            }
+        })
+        return {
+            areaIndex,
+            pointIndex
+        }
+    }
 
 
     function cleanCanvas ({ ctx, canvas }) {
@@ -166,16 +206,15 @@
         ctx.save();
         points.forEach(({ x, y, w, h }) => {
             ctx.beginPath();
-            // ctx.fillRect(x, y, w, h);
             ctx.arc(x, y, 10, 0, Math.PI*2);
             ctx.closePath();
-            ctx.strokeStyle = "#3e25cc";
+            ctx.fillStyle = "#3e25cc";
             ctx.fill();
         });
         ctx.restore();
     }
 
-    function drawLine (ctx, { points, add }, movePoint = null) {
+    function drawLine (ctx, { points, add, isCloseState, closePointIndex }, movePoint = null) {
         if (!points.length) return;
         points.forEach(({ x, y, w, h }, index) => {
             if (index === 0) {
@@ -188,6 +227,9 @@
         if (movePoint) {
             ctx.lineTo(movePoint.x, movePoint.y);
         }
+        if (isCloseState) {
+            ctx.lineTo(points[closePointIndex].x, points[closePointIndex].y);
+        }
         ctx.lineWidth = 3
         const num = Math.random() * 5
         ctx.strokeStyle = 'red';
@@ -198,6 +240,10 @@
 
     function Area () {
         this.points = [];
+        // 是否闭合状态
+        this.isCloseState = false;
+        // 闭合节点索引
+        this.closePointIndex = -1;
         this.add = (point) => {
             this.points.push(point);
             return this.points;
@@ -207,12 +253,11 @@
 
     function clickPointIndex (x, y, area) {
         const { points } = area;
-
         for(let i = 0; i < points.length; i++) {
             const p = points[i];
             //使用勾股定理计算这个点与圆心之间的距离
             const distanceFromCenter = Math.sqrt(Math.pow(p.x - x, 2) + Math.pow(p.y - y, 2));
-            if (distanceFromCenter <= 20) {
+            if (distanceFromCenter <= 10) {
                 return i;
             }
         }
@@ -226,15 +271,13 @@
             drawPoint(ctx, item);
             ctx.beginPath();
             drawLine(ctx, item);
-            ctx.closePath();
+            ctx.fillStyle = "rgba(107, 250, 255, .4)";
+            ctx.fill();
 
             const isInPath = ctx.isPointInPath(x, y);
             if (isInPath) {
                 index = ind;
             }
-
-            ctx.fillStyle = "rgba(107, 250, 255, .4)";
-            ctx.fill();
         });
         return index;
     }
