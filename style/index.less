@@ -16,22 +16,41 @@
     #m-canvas {
       width: 600px;
       height: 600px;
+      z-index: 2;
     }
+
+
   }
 
   main {
     width: 100%;
-    text-align: center;
+    //text-align: center;
 
     .m-line_canvas {
       //width: 700px;
       //height: 700px;
       border: 1px solid #61dafb;
     }
+
+    .m-main-img {
+      width: 700px;
+      height: 1000px;
+      display: none;
+    }
+
   }
 }
 
 
 #m-canvas {
   border: 1px solid #61dafb;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1111;
+}
+
+#m-canvas-img {
+  position: absolute;
+  z-index: 11;
 }
