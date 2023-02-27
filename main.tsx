@@ -1,10 +1,14 @@
-import { PicCanvas } from "./src";
-import { createRoot } from "react-dom/client";
 import './style/index.less';
+import { createRoot, h } from "./src";
+/** @jsx h */
 
-const rootDom = document.getElementById('root');
-const reactRoot = createRoot(rootDom);
+const App =  (
+        <div className="m-root-app" style={{width: '10', height: '10', background: 'red'}}>
+            1
+        </div>
+    );
 
-reactRoot.render(
-    <PicCanvas/>
-);
+const canvas = document.getElementById('m-root-canvas');
+const root = createRoot(canvas);
+root.render(App);
+

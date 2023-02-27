@@ -1,5 +1,6 @@
 const path = require("path");
 const HtmlPlugin = require("html-webpack-plugin");
+const JSXPlugin = require("../plugins/jsx_parser")
 
 const htmlPlugin = new HtmlPlugin({
     template: 'public/index.html',
@@ -29,15 +30,9 @@ const baseConfig = {
                     },
                     {
                         loader: 'css-loader',
-                        // options: {
-                        //     importLoaders: 1
-                        // }
                     },
                     {
                         loader: 'less-loader',
-                        // options: {
-                        //     importLoaders: 1
-                        // }
                     }]
             },
             {
@@ -52,8 +47,8 @@ const baseConfig = {
                             }
                         }],
                         '@babel/preset-typescript',
-                        ['@babel/preset-react', {"runtime": "automatic"}]
-                    ]
+                    ],
+                    plugins: [[JSXPlugin, { "pragma": "h" }]]
                 }
             }]
     },
