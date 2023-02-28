@@ -54,3 +54,93 @@
   position: absolute;
   z-index: 11;
 }
+
+
+.m-draw {
+  width: 100%;
+  height: 90vh;
+  border: 2px dashed #EBEBEB;
+  border-radius: 3px;
+
+  .m-draw-header {
+      background: #F9F1ED;
+      padding: 7px 20px;
+
+      .m-draw-header-item {
+        font-size: 15px;
+        cursor: pointer;
+      }
+  }
+
+  >header {
+    display: flex;
+    align-items: center;
+    min-height: 120px;
+    background: #F9F9F9;
+    border-bottom: 1.7px solid #EBEBEB;
+    padding: 5px 0;
+
+    >div {
+        padding: 0 10px;
+    }
+
+    .m-draw-utils {
+      border-right: 1.6px solid #EBEBEB;
+
+      >div {
+        display: flex;
+        flex-wrap: wrap;
+        width: 150px;
+        justify-content: space-between;
+        align-items: center;
+
+        .m-svg-icon {
+          margin: 5px;
+          cursor: pointer;
+          transition: .5s;
+          border: 2px solid transparent;
+          padding: 0 2px;
+          border-radius: 5px;
+        }
+
+        .m-svg-icon-check {
+          border: 2px solid #57606f;
+        }
+
+        .m-svg-icon:hover {
+          background: #ecf0f1;
+          border: 2px solid #ccc;
+        }
+      }
+
+      >p {
+        text-align: center;
+        font-size: 14px;
+      }
+    }
+  }
+
+  >main {
+    height: calc(100% - 120px);
+    background: #F8F8F8;
+  }
+}
+
+.m-draw-header-item_file {
+
+
+  .m-draw-file_box {
+    position: relative;
+    width: 100px;
+    text-align: center;
+    cursor: pointer;
+
+    >input[type=file] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      opacity: 0;
+    }
+  }
+}

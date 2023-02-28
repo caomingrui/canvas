@@ -1,0 +1,88 @@
+import {useEffect, useMemo, useRef, useState} from "react";
+import { Button, Popover, Tabs } from 'antd';
+import {HuaBi, ShuaZi, XiGuan, ZiTi, XiangPi, DiyKuanXuan} from './static/someSvg'
+import useTest from "../hooks/useBoxSelection/ttt";
+
+const Draw = () => {
+    const canvasRef = useRef(null);
+    const mainRef = useRef(null);
+    const { updateState, canvasState } = useTest({
+        type: null,
+        canvas: canvasRef,
+        mainRef
+    });
+
+    const { type } = canvasState;
+
+    const FileList = (
+            <div className="m-draw-header-item_file">
+                <p className="m-draw-file_box">
+                    <input type="file" onChange={uploadImg}/> 上传
+                </p>
+                <p>Content</p>
+            </div>
+        );
+
+    return (
+        <div className="m-draw">
+            <div className="m-draw-header">
+                <div className="m-draw-header-item">
+                    <Popover content={FileList} trigger="click">
+                        <Button type="text">文件</Button>
+                    </Popover>
+                </div>
+            </div>
+            <header>
+                <div className="m-draw-utils">
+                    <div>
+                        <HuaBi fontSize={'27px'} onClick={updateState.bind(null, 0)} className={typeClass(type, 0)}/>
+                        <ShuaZi fontSize={'25px'}/>
+                        <XiGuan fontSize={'22px'}/>
+                        <ZiTi fontSize={'27px'}/>
+                        <XiangPi fontSize={'25px'} onClick={updateState.bind(null, 4)} className={typeClass(type, 4)}/>
+                        <div style={{width: '40px'}}></div>
+                    </div>
+                    <p>工具</p>
+                </div>
+                <div className="m-draw-utils">
+                    <div>
+                        <DiyKuanXuan fontSize={'25px'} onClick={updateState.bind(null, 5)} className={typeClass(type, 5)}/>
+                        <ShuaZi fontSize={'25px'}/>
+                        <XiGuan fontSize={'22px'}/>
+                        <ZiTi fontSize={'27px'}/>
+                        <XiangPi fontSize={'25px'}/>
+                        <div style={{width: '40px'}}></div>
+                    </div>
+                    <p>图像</p>
+                </div>
+            </header>
+            <main ref={mainRef}>
+                <canvas id="m-draw-canvas" ref={canvasRef}/>
+            </main>
+
+            <footer>
+
+            </footer>
+        </div>
+    );
+
+
+    function uploadImg (event) {
+        const img = new Image();
+        const url = URL.createObjectURL(event.target.files[0]);
+        img.src = url;
+        img.onload = function () {
+            const canvas = canvasRef.current;
+            canvas.width = mainRef.current.offsetWidth;
+            canvas.height = mainRef.current.offsetHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        }
+    }
+}
+
+export default Draw;
+
+function typeClass (type: number, resType: number) {
+    return type === resType? 'm-svg-icon-check m-svg-icon': 'm-svg-icon';
+}

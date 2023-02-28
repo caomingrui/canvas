@@ -5,371 +5,368 @@
     <title>Title</title>
 </head>
 <body>
-  <div id="root"></div>
-  <div class="m-canvas-component">
-    <main style="position: relative">
-        <img src="t.jpg" alt="" class="m-main-img">
-<!--        图层1-->
-        <canvas id="m-canvas" width='700' height='1000'></canvas>
-<!--        图层2-->
-        <canvas id="m-canvas-img" width='700' height='1000'></canvas>
-    </main>
-  </div>
+<div id="root"></div>
+<!--  <div class="m-canvas-component">-->
+<!--    <main style="position: relative">-->
+<!--        <img src="t.jpg" alt="" class="m-main-img">-->
+<!--&lt;!&ndash;        图层1&ndash;&gt;-->
+<!--        <canvas id="m-canvas" width='700' height='1000'></canvas>-->
+<!--&lt;!&ndash;        图层2&ndash;&gt;-->
+<!--        <canvas id="m-canvas-img" width='700' height='1000'></canvas>-->
+<!--    </main>-->
 
+<!--      <footer id="footer">-->
+<!--          <button class="textXz">下载</button>-->
+<!--          <canvas id="m-canvas-view" width="700" height="1000"></canvas>-->
+<!--      </footer>-->
+<!--  </div>-->
 </body>
-<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>-->
-<!--<script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>-->
-<script>
-    const canvas = document.getElementById("m-canvas");
-    const canvasImg = document.getElementById("m-canvas-img");
-    const rect = canvas.getBoundingClientRect();
-    const ctx = canvas.getContext('2d')
-    let lineStatus = false;
-    // 背景像素集合
-    let getImageData = null;
-    let selectAreaIndex = -1, selectPointIndex = -1, areas = [], copyAreas = [];
-    let downx, downy, isMouseDown = false,
-        // 选中移动
-        pointMouseMoveState = false,
-        // 是否按下 防止生成多个点
-        isPointMouseDownState = false;
-        // 测试
-        let closeImageData = null;
+<!--<script>-->
+<!--    const canvas = document.getElementById("m-canvas");-->
+<!--    const canvasImg = document.getElementById("m-canvas-img");-->
+<!--    const rect = canvas.getBoundingClientRect();-->
+<!--    const ctx = canvas.getContext('2d')-->
+<!--    let lineStatus = false;-->
+<!--    // 背景像素集合-->
+<!--    let getImageData = null;-->
+<!--    let selectAreaIndex = -1, selectPointIndex = -1, areas = [], copyAreas = [];-->
+<!--    let downx, downy, isMouseDown = false,-->
+<!--        // 选中移动-->
+<!--        pointMouseMoveState = false,-->
+<!--        // 是否按下 防止生成多个点-->
+<!--        isPointMouseDownState = false;-->
+<!--        // 测试-->
+<!--        let closeImageData = null;-->
 
-        window.onload = function () {
-            renderImg(ctx)
-        }
+<!--    window.onload = function () {-->
+<!--        renderImg(ctx)-->
+<!--    }-->
 
-    canvas.addEventListener('mousedown', (event) => {
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        let area;
-        downx = x;
-        downy = y;
-        // 闭合后 选取areas移动
-        if (!lineStatus) {
-            // 是否是路径上的节点
-            const { areaIndex, pointIndex } = findPointIndex(ctx, areas, x, y);
-            if (areaIndex != -1) {
-                isMouseDown = true;
-                selectAreaIndex = areaIndex;
-                copyAreas = areas;
-                selectPointIndex = pointIndex;
-                pointMouseMoveState = true;
-                return;
-            }
-            else {
-                // 是否选中图层
-                cleanCanvas({ ctx, canvas });
-                const index = isInConstituency(ctx, areas, x, y);
-                if (index != -1) {
-                    isMouseDown = true;
-                    selectAreaIndex = index;
-                    copyAreas = areas;
-                    const pointIndex = clickPointIndex(x, y, areas[index]);
-                    if (pointIndex != -1) {
-                        selectPointIndex = pointIndex;
-                        pointMouseMoveState = true;
-                    }
-                    return;
-                }
-            }
-        }
+<!--    canvas.addEventListener('mousedown', (event) => {-->
+<!--        const x = event.clientX - rect.left;-->
+<!--        const y = event.clientY - rect.top;-->
+<!--        let area;-->
+<!--        downx = x;-->
+<!--        downy = y;-->
+<!--        // 闭合后 选取areas移动-->
+<!--        if (!lineStatus) {-->
+<!--            // 是否是路径上的节点-->
+<!--            const { areaIndex, pointIndex } = findPointIndex(ctx, areas, x, y);-->
+<!--            if (areaIndex != -1) {-->
+<!--                isMouseDown = true;-->
+<!--                selectAreaIndex = areaIndex;-->
+<!--                copyAreas = areas;-->
+<!--                selectPointIndex = pointIndex;-->
+<!--                pointMouseMoveState = true;-->
+<!--                return;-->
+<!--            }-->
+<!--            else {-->
+<!--                // 是否选中图层-->
+<!--                cleanCanvas({ ctx, canvas });-->
+<!--                const index = isInConstituency(ctx, areas, x, y);-->
+<!--                if (index != -1) {-->
+<!--                    isMouseDown = true;-->
+<!--                    selectAreaIndex = index;-->
+<!--                    copyAreas = areas;-->
+<!--                    const pointIndex = clickPointIndex(x, y, areas[index]);-->
+<!--                    if (pointIndex != -1) {-->
+<!--                        selectPointIndex = pointIndex;-->
+<!--                        pointMouseMoveState = true;-->
+<!--                    }-->
+<!--                    return;-->
+<!--                }-->
+<!--            }-->
+<!--        }-->
 
-        // 闭合新建 area 内容
-        if (!lineStatus) {
-            area = new Area();
-            areas.push(area);
-            lineStatus = true;
-        }
-        else {
-            area = areas.slice().pop();
-        }
+<!--        // 闭合新建 area 内容-->
+<!--        if (!lineStatus) {-->
+<!--            area = new Area();-->
+<!--            areas.push(area);-->
+<!--            lineStatus = true;-->
+<!--        }-->
+<!--        else {-->
+<!--            area = areas.slice().pop();-->
+<!--        }-->
 
-        // 选中是否为路径上的节点
-        const index = clickPointIndex(x, y, area);
-        if (index === -1) {
-            area.add({ x, y, w: 3, h: 3 });
-            isMouseDown = true;
-        }
-        else {
-            area.isCloseState = true;
-            area.closePointIndex = index;
-            isMouseDown = false;
-            lineStatus = false;
-        }
-        cleanCanvas({ ctx, canvas });
-        drawAll(ctx, areas);
-    })
+<!--        // 选中是否为路径上的节点-->
+<!--        const index = clickPointIndex(x, y, area);-->
+<!--        if (index === -1) {-->
+<!--            area.add({ x, y, w: 3, h: 3 });-->
+<!--            isMouseDown = true;-->
+<!--        }-->
+<!--        else {-->
+<!--            area.isCloseState = true;-->
+<!--            area.closePointIndex = index;-->
+<!--            isMouseDown = false;-->
+<!--            lineStatus = false;-->
+<!--        }-->
+<!--        cleanCanvas({ ctx, canvas });-->
+<!--        drawAll(ctx, areas);-->
+<!--    })-->
 
-    canvas.addEventListener('mousemove', (event) => {
-        if (!isMouseDown) return;
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        const disx = x - downx;
-        const disy = y - downy;
-        copyAreas = JSON.parse(JSON.stringify(areas))
-        cleanCanvas({ ctx, canvas });
+<!--    canvas.addEventListener('mousemove', (event) => {-->
+<!--        if (!isMouseDown) return;-->
+<!--        const x = event.clientX - rect.left;-->
+<!--        const y = event.clientY - rect.top;-->
+<!--        const disx = x - downx;-->
+<!--        const disy = y - downy;-->
+<!--        copyAreas = JSON.parse(JSON.stringify(areas))-->
+<!--        cleanCanvas({ ctx, canvas });-->
 
-        // 拖动点
-        if (pointMouseMoveState) {
-            const { points } = copyAreas[selectAreaIndex];
-            const oldPointsItem = copyAreas[selectAreaIndex].points[selectPointIndex]
-            points[selectPointIndex].x = oldPointsItem.x + disx;
-            points[selectPointIndex].y = oldPointsItem.y + disy;
+<!--        // 拖动点-->
+<!--        if (pointMouseMoveState) {-->
+<!--            const { points } = copyAreas[selectAreaIndex];-->
+<!--            const oldPointsItem = copyAreas[selectAreaIndex].points[selectPointIndex]-->
+<!--            points[selectPointIndex].x = oldPointsItem.x + disx;-->
+<!--            points[selectPointIndex].y = oldPointsItem.y + disy;-->
 
-            drawAll(ctx, copyAreas);
-        }
-        // 拖动
-        else if (!lineStatus) {
-            const { points, closeCoordinate } = copyAreas[selectAreaIndex];
-            points.forEach((p, ind) => {
-                const oldPointsItem = copyAreas[selectAreaIndex].points[ind]
-                p.x = oldPointsItem.x + disx;
-                p.y = oldPointsItem.y + disy;
-            })
-            // setTimeout(() => {
-                let a1 = closeCoordinate[0] + disx, a2 = closeCoordinate[1] + disy;
-                ctx.putImageData(closeImageData, a1, a2)
-                copyAreas[selectAreaIndex].closeCoordinate = [a1, a2];
-            // })
+<!--            drawAll(ctx, copyAreas);-->
+<!--        }-->
+<!--        // 拖动-->
+<!--        else if (!lineStatus) {-->
+<!--            const { points, closeCoordinate } = copyAreas[selectAreaIndex];-->
+<!--            points.forEach((p, ind) => {-->
+<!--                const oldPointsItem = copyAreas[selectAreaIndex].points[ind]-->
+<!--                p.x = oldPointsItem.x + disx;-->
+<!--                p.y = oldPointsItem.y + disy;-->
+<!--            })-->
+<!--            // 像素图层拖拽-->
+<!--            let imageDataX = closeCoordinate[0] + disx, imageDataY = closeCoordinate[1] + disy;-->
+<!--            ctx.putImageData(closeImageData, imageDataX, imageDataY)-->
+<!--            copyAreas[selectAreaIndex].closeCoordinate = [imageDataX, imageDataY];-->
 
-            drawAll(ctx, copyAreas);
-        }
-        // 绘制路径
-        else {
-            isPointMouseDownState = true;
-            drawAll(ctx, areas.map((res, ind) => {
-                if (ind === areas.length - 1) {
-                    return { ...res, points: res.points.concat({x,y,w: 3, h: 3}) }
-                }
-                return res;
-            }));
-        }
-    })
+<!--            drawAll(ctx, copyAreas);-->
+<!--        }-->
+<!--        // 绘制路径-->
+<!--        else {-->
+<!--            isPointMouseDownState = true;-->
+<!--            drawAll(ctx, areas.map((res, ind) => {-->
+<!--                if (ind === areas.length - 1) {-->
+<!--                    return { ...res, points: res.points.concat({x,y,w: 3, h: 3}) }-->
+<!--                }-->
+<!--                return res;-->
+<!--            }));-->
+<!--        }-->
+<!--    })-->
 
-    canvas.addEventListener('mouseup', (event) => {
-        if (!isMouseDown) return;
-        // 拖动
-        if (!lineStatus) {
-            areas = copyAreas;
-            isMouseDown = false;
-            lineStatus = false;
-            pointMouseMoveState = false;
-            selectAreaIndex = -1;
-            selectPointIndex = -1;
-            return;
-        }
+<!--    canvas.addEventListener('mouseup', (event) => {-->
+<!--        if (!isMouseDown) return;-->
+<!--        // 拖动-->
+<!--        if (!lineStatus) {-->
+<!--            areas = copyAreas;-->
+<!--            isMouseDown = false;-->
+<!--            lineStatus = false;-->
+<!--            pointMouseMoveState = false;-->
+<!--            selectAreaIndex = -1;-->
+<!--            selectPointIndex = -1;-->
+<!--            return;-->
+<!--        }-->
 
-        cleanCanvas({ ctx, canvas });
-        drawAll(ctx, areas);
-    })
+<!--        cleanCanvas({ ctx, canvas });-->
+<!--        drawAll(ctx, areas);-->
+<!--    })-->
 
-    document.addEventListener('keyup', (event) => {
-        if (event.ctrlKey && event.code === "KeyZ") {
-            const area = areas.pop();
-            area.points.pop();
-            area.points.length && areas.push(area)
-            cleanCanvas({ ctx, canvas });
-            drawAll(ctx, areas);
-        }
+<!--    document.addEventListener('keyup', (event) => {-->
+<!--        if (event.ctrlKey && event.code === "KeyZ") {-->
+<!--            const area = areas.pop();-->
+<!--            area.points.pop();-->
+<!--            area.points.length && areas.push(area)-->
+<!--            cleanCanvas({ ctx, canvas });-->
+<!--            drawAll(ctx, areas);-->
+<!--        }-->
 
-        if (event.code === "Backspace") {
-            areas.splice(selectAreaIndex, 1);
-            isMouseDown = false
-            cleanCanvas({ ctx, canvas });
-            drawAll(ctx, areas);
-        }
-    });
+<!--        if (event.code === "Backspace") {-->
+<!--            areas.splice(selectAreaIndex, 1);-->
+<!--            isMouseDown = false-->
+<!--            cleanCanvas({ ctx, canvas });-->
+<!--            drawAll(ctx, areas);-->
+<!--        }-->
+<!--    });-->
 
-    function findPointIndex(ctx, areas, x, y) { // 找到当前坐标在哪个区域的哪个坐标点上，并将两个下标返回
-        let areaIndex = -1;
-        let pointIndex = -1;
-        areas.forEach((a, i) => {
-            if (areaIndex >= 0) return;
-            const index = clickPointIndex(x, y, a);
-            if (index >= 0) {
-                areaIndex = i;
-                pointIndex = index;
-            }
-        })
-        return {
-            areaIndex,
-            pointIndex
-        }
-    }
+<!--    function findPointIndex(ctx, areas, x, y) { // 找到当前坐标在哪个区域的哪个坐标点上，并将两个下标返回-->
+<!--        let areaIndex = -1;-->
+<!--        let pointIndex = -1;-->
+<!--        areas.forEach((a, i) => {-->
+<!--            if (areaIndex >= 0) return;-->
+<!--            const index = clickPointIndex(x, y, a);-->
+<!--            if (index >= 0) {-->
+<!--                areaIndex = i;-->
+<!--                pointIndex = index;-->
+<!--            }-->
+<!--        })-->
+<!--        return {-->
+<!--            areaIndex,-->
+<!--            pointIndex-->
+<!--        }-->
+<!--    }-->
 
 
-    function cleanCanvas ({ ctx, canvas }) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
+<!--    function cleanCanvas ({ ctx, canvas }) {-->
+<!--        ctx.clearRect(0, 0, canvas.width, canvas.height);-->
+<!--    }-->
 
 
-    function drawAll (ctx, areas, movePoint) {
-        // renderImg(ctx)
-        areas.forEach(item => {
-            drawPoint(ctx, item);
-            ctx.beginPath();
-            drawLine(ctx, item, movePoint);
-            ctx.closePath();
-            ctx.fillStyle = "rgba(107, 250, 255, .4)";
-            ctx.fill();
-            if (item.isCloseState && !item.closeImageData) {
-                console.log('111')
-                renderTest(ctx, item, canvas, getImageData);
-            }
-        });
-    }
+<!--    function drawAll (ctx, areas, movePoint) {-->
+<!--        // renderImg(ctx)-->
+<!--        areas.forEach(item => {-->
+<!--            if (item.isCloseState && !item.closeImageData) {-->
+<!--                renderTest(ctx, item, canvas, getImageData);-->
+<!--            }-->
+<!--            drawPoint(ctx, item);-->
+<!--            ctx.beginPath();-->
+<!--            drawLine(ctx, item, movePoint);-->
+<!--            ctx.closePath();-->
+<!--            // ctx.fillStyle = "rgba(107, 250, 255, .4)";-->
+<!--            // ctx.fill();-->
+<!--        });-->
+<!--    }-->
 
 
-    function drawPoint (ctx, { points, add }) {
-        if (!points.length) return;
-        ctx.save();
-        points.forEach(({ x, y, w, h }) => {
-            ctx.beginPath();
-            ctx.arc(x, y, 10, 0, Math.PI*2);
-            ctx.closePath();
-            ctx.fillStyle = "#3e25cc";
-            ctx.fill();
-        });
-        ctx.restore();
-    }
+<!--    function drawPoint (ctx, { points, add }) {-->
+<!--        if (!points.length) return;-->
+<!--        ctx.save();-->
+<!--        points.forEach(({ x, y, w, h }) => {-->
+<!--            ctx.beginPath();-->
+<!--            ctx.arc(x, y, 4, 0, Math.PI * 2);-->
+<!--            ctx.closePath();-->
+<!--            ctx.fillStyle = "#3e25cc";-->
+<!--            ctx.fill();-->
+<!--        });-->
+<!--        ctx.restore();-->
+<!--    }-->
 
-    function drawLine (ctx, { points, add, isCloseState, closePointIndex }, movePoint = null) {
-        if (!points.length) return;
-        points.forEach(({ x, y, w, h }, index) => {
-            if (index === 0) {
-                ctx.moveTo(x, y);
-            }
-            else {
-                ctx.lineTo(x, y);
-            }
-        });
-        if (movePoint) {
-            ctx.lineTo(movePoint.x, movePoint.y);
-        }
-        if (isCloseState) {
-            ctx.lineTo(points[closePointIndex].x, points[closePointIndex].y);
-        }
-        ctx.lineWidth = 3
-        const num = Math.random() * 5
-        ctx.strokeStyle = 'red';
-        ctx.setLineDash([num%2 ? 3: 5, 10]);
-        ctx.stroke();
-    }
-
-
-    function Area () {
-        this.points = [];
-        // 是否闭合状态
-        this.isCloseState = false;
-        // 闭合X | y
-        this.closeCoordinate = [0, 0];
-        // 闭合节点索引
-        this.closePointIndex = -1;
-        // 闭合图像
-        this.closeImageData = null;
-        this.add = (point) => {
-            this.points.push(point);
-            return this.points;
-        }
-    }
+<!--    function drawLine (ctx, { points, add, isCloseState, closePointIndex }, movePoint = null) {-->
+<!--        if (!points.length) return;-->
+<!--        points.forEach(({ x, y, w, h }, index) => {-->
+<!--            if (index === 0) {-->
+<!--                ctx.moveTo(x, y);-->
+<!--            }-->
+<!--            else {-->
+<!--                ctx.lineTo(x, y);-->
+<!--            }-->
+<!--        });-->
+<!--        if (movePoint) {-->
+<!--            ctx.lineTo(movePoint.x, movePoint.y);-->
+<!--        }-->
+<!--        if (isCloseState) {-->
+<!--            ctx.lineTo(points[closePointIndex].x, points[closePointIndex].y);-->
+<!--        }-->
+<!--        ctx.lineWidth = 3-->
+<!--        const num = Math.random() * 5-->
+<!--        ctx.strokeStyle = 'red';-->
+<!--        ctx.setLineDash([num%2 ? 3: 5, 10]);-->
+<!--        ctx.stroke();-->
+<!--    }-->
 
 
-    function clickPointIndex (x, y, area) {
-        const { points } = area;
-        for(let i = 0; i < points.length; i++) {
-            const p = points[i];
-            //使用勾股定理计算这个点与圆心之间的距离
-            const distanceFromCenter = Math.sqrt(Math.pow(p.x - x, 2) + Math.pow(p.y - y, 2));
-            if (distanceFromCenter <= 10) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    // 遍历画出所有内容， 画一个判断一个
-    function isInConstituency (ctx, areas, x, y) {
-        let index = -1;
-        areas.forEach((item, ind) => {
-            drawPoint(ctx, item);
-            ctx.beginPath();
-            drawLine(ctx, item);
-            ctx.fillStyle = "rgba(107, 250, 255, .4)";
-            ctx.fill();
-
-            const isInPath = ctx.isPointInPath(x, y);
-            if (isInPath) {
-                index = ind;
-            }
-        });
-        return index;
-    }
+<!--    function Area () {-->
+<!--        this.points = [];-->
+<!--        // 是否闭合状态-->
+<!--        this.isCloseState = false;-->
+<!--        // 闭合X | y-->
+<!--        this.closeCoordinate = [0, 0];-->
+<!--        // 闭合节点索引-->
+<!--        this.closePointIndex = -1;-->
+<!--        // 闭合图像-->
+<!--        this.closeImageData = null;-->
+<!--        this.add = (point) => {-->
+<!--            this.points.push(point);-->
+<!--            return this.points;-->
+<!--        }-->
+<!--    }-->
 
 
-    function renderTest (ctx, area, canvas, getImageData) {
-        // area.closeImageData = ctx.createImageData(canvas.width, canvas.height);
-        const dd = getAreasPixel(ctx, canvas, getImageData)
-        ctx.putImageData(dd, 0, 0);
-        area.closeImageData = 1;
-        closeImageData = dd;
-    }
+<!--    function clickPointIndex (x, y, area) {-->
+<!--        const { points } = area;-->
+<!--        for(let i = 0; i < points.length; i++) {-->
+<!--            const p = points[i];-->
+<!--            //使用勾股定理计算这个点与圆心之间的距离-->
+<!--            const distanceFromCenter = Math.sqrt(Math.pow(p.x - x, 2) + Math.pow(p.y - y, 2));-->
+<!--            if (distanceFromCenter <= 4) {-->
+<!--                return i;-->
+<!--            }-->
+<!--        }-->
+<!--        return -1;-->
+<!--    }-->
+
+<!--    // 遍历画出所有内容， 画一个判断一个-->
+<!--    function isInConstituency (ctx, areas, x, y) {-->
+<!--        let index = -1;-->
+<!--        areas.forEach((item, ind) => {-->
+<!--            drawPoint(ctx, item);-->
+<!--            ctx.beginPath();-->
+<!--            drawLine(ctx, item);-->
+<!--            ctx.fillStyle = "rgba(107, 250, 255, .4)";-->
+<!--            ctx.fill();-->
+
+<!--            const isInPath = ctx.isPointInPath(x, y);-->
+<!--            if (isInPath) {-->
+<!--                index = ind;-->
+<!--            }-->
+<!--        });-->
+<!--        return index;-->
+<!--    }-->
 
 
-    function renderImg (ctx) {
-        let original = document.querySelector('.m-main-img');
-        let w = canvas.width;
-        let h = canvas.height;
-        const ctx1 = canvasImg.getContext('2d')
-        ctx1.drawImage(original, 0, 0, w, h);
-        if (getImageData) return;
-        getImageData = ctx1.getImageData(0, 0, w, h);
-    }
+<!--    function renderTest (ctx, area, canvas, getImageData) {-->
+<!--        const dd = getAreasPixel(ctx, canvas, getImageData)-->
+<!--        ctx.putImageData(dd, 0, 0);-->
+<!--        area.closeImageData = 1;-->
+<!--        closeImageData = dd;-->
+<!--    }-->
 
 
-    function getAreasPixel (ctx, canvas, pixels, linePixels) {
-        const newImageData = linePixels || ctx.createImageData(canvas.width, canvas.height);
-        const pathPixels = newImageData.data;
-        for (let x = 0; x < canvas.width; x++) {
-            for (let y = 0; y < canvas.height; y++) {
-                const index = (y * canvas.width + x) * 4;
-                if (ctx.isPointInPath(x, y)) {
-                    pathPixels[index] = pixels.data[index];
-                    pathPixels[index + 1] = pixels.data[index + 1];
-                    pathPixels[index + 2] = pixels.data[index + 2];
-                    pathPixels[index + 3] = pixels.data[index + 3];
-                }
-                else {
-                    pathPixels[index] = 255;
-                    pathPixels[index + 1] = 255;
-                    pathPixels[index + 2] = 255;
-                    pathPixels[index + 3] = 0
-                }
-            }
-        }
-        return newImageData;
-    }
+<!--    function renderImg (ctx) {-->
+<!--        let original = document.querySelector('.m-main-img');-->
+<!--        let w = canvasImg.width;-->
+<!--        let h = canvasImg.height;-->
+<!--        const ctx1 = canvasImg.getContext('2d')-->
+<!--        ctx1.drawImage(original, 0, 0, w, h);-->
+<!--        if (getImageData) return;-->
+<!--        getImageData = ctx1.getImageData(0, 0, w, h);-->
+<!--    }-->
 
 
-    function getAreasItemsPixel (ctx, canvas, pixels) {
-        const pathPixels = [];
-        for (let x = 0; x < canvas.width; x++) {
-            for (let y = 0; y < canvas.height; y++) {
-                const index = (y * canvas.width + x) * 4;
-                if (ctx.isPointInPath(x, y)) {
-                    pathPixels.push({
-                        x: x,
-                        y: y,
-                        r: pixels.data[index],
-                        g: pixels.data[index + 1],
-                        b: pixels.data[index + 2],
-                        a: pixels.data[index + 3]
-                    })
-                }
-            }
-        }
-        return pathPixels;
-    }
-</script>
+<!--    function getAreasPixel (ctx, canvas, pixels, linePixels) {-->
+<!--        const newImageData = linePixels || ctx.createImageData(canvas.width, canvas.height);-->
+<!--        const pathPixels = newImageData.data;-->
+<!--        for (let x = 0; x < canvas.width; x++) {-->
+<!--            for (let y = 0; y < canvas.height; y++) {-->
+<!--                const index = (y * canvas.width + x) * 4;-->
+<!--                if (ctx.isPointInPath(x, y)) {-->
+<!--                    pathPixels[index] = pixels.data[index];-->
+<!--                    pathPixels[index + 1] = pixels.data[index + 1];-->
+<!--                    pathPixels[index + 2] = pixels.data[index + 2];-->
+<!--                    pathPixels[index + 3] = pixels.data[index + 3];-->
+<!--                }-->
+<!--                else {-->
+<!--                    pathPixels[index] = 255;-->
+<!--                    pathPixels[index + 1] = 255;-->
+<!--                    pathPixels[index + 2] = 255;-->
+<!--                    pathPixels[index + 3] = 0-->
+<!--                }-->
+<!--            }-->
+<!--        }-->
+<!--        return newImageData;-->
+<!--    }-->
+
+<!--    document.querySelector('.textXz').onclick = testXz-->
+
+<!--    function testXz () {-->
+<!--        const canvas3 = document.getElementById('m-canvas-view');-->
+<!--        const ctx3 = canvas3.getContext('2d')-->
+<!--        ctx3.globalCompositeOperation = "hue";-->
+
+
+<!--        cleanCanvas({ctx, canvas});-->
+<!--        const de = areas.find(el => el.closeCoordinate)-->
+<!--        ctx.putImageData(closeImageData, de.closeCoordinate[0], de.closeCoordinate[1])-->
+<!--        ctx3.drawImage(canvas, 0, 0);-->
+<!--        ctx3.drawImage(canvasImg, 0, 0);-->
+<!--        let dataImg = new Image()-->
+<!--        dataImg.src = canvas3.toDataURL('image/png')-->
+<!--        console.log(dataImg.src)-->
+<!--        document.body.appendChild(dataImg)-->
+<!--    }-->
+<!--</script>-->
 </html>
