@@ -1,15 +1,11 @@
-import {useEffect, useMemo, useRef, useState} from "react";
-import { Button, Popover, Tabs } from 'antd';
-import {HuaBi, ShuaZi, XiGuan, ZiTi, XiangPi, DiyKuanXuan} from './static/someSvg'
-import useTest from "../hooks/useBoxSelection/ttt";
+import { Button, Popover } from 'antd';
+import {HuaBi, ShuaZi, XiGuan, ZiTi, XiangPi, DiyKuanXuan} from './static/canvasSvgs'
+import useCanvasDraw from "../hooks/useCanvasDraw";
+import {LegacyRef} from "react";
 
 const Draw = () => {
-    const canvasRef = useRef(null);
-    const mainRef = useRef(null);
-    const { updateState, canvasState } = useTest({
+    const { updateState, canvasState, canvasRef } = useCanvasDraw({
         type: null,
-        canvas: canvasRef,
-        mainRef
     });
 
     const { type } = canvasState;
@@ -56,8 +52,9 @@ const Draw = () => {
                     <p>图像</p>
                 </div>
             </header>
-            <main ref={mainRef}>
-                <canvas id="m-draw-canvas" ref={canvasRef}/>
+
+            <main>
+                <canvas id="m-draw-canvas" ref={canvasRef as LegacyRef<HTMLCanvasElement>}/>
             </main>
 
             <footer>
@@ -67,21 +64,20 @@ const Draw = () => {
     );
 
 
-    function uploadImg (event) {
+    function uploadImg (event: any) {
         const img = new Image();
         const url = URL.createObjectURL(event.target.files[0]);
         img.src = url;
         img.onload = function () {
-            const canvas = canvasRef.current;
-            canvas.width = mainRef.current.offsetWidth;
-            canvas.height = mainRef.current.offsetHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+            // const ctx = canvas.getContext('2d');
+            // ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
         }
     }
 }
 
 export default Draw;
+
+
 
 function typeClass (type: number, resType: number) {
     return type === resType? 'm-svg-icon-check m-svg-icon': 'm-svg-icon';
