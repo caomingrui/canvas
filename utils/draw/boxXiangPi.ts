@@ -17,7 +17,7 @@ export default function boxRubber ({ canvas, stash }: BoxRubberProps) {
     let areas = stash.stash || [];
 
     let configure = {
-        rubberSize: 10
+        rubberSize: 20
     }
 
     let isMouseDown = false, closeState = true;
@@ -51,14 +51,13 @@ export default function boxRubber ({ canvas, stash }: BoxRubberProps) {
         stash?.renderAll((item, index) => {
             let isInPath = ctx.isPointInPath(x, y)
             if (isInPath) {
-                item[index].dotList.forEach((el, ind) => {
+                item[index].drawList.forEach((el, ind) => {
                     if (el.x >= x - (configure.rubberSize/2) && el.x <= x + (configure.rubberSize/2)) {
                         if (el.y >= y - (configure.rubberSize/2) && el.y <= y + (configure.rubberSize/2)) {
                             el.del = true;
                         }
                     }
                 })
-                console.log(isInPath, item, index, x, y)
             }
 
         });
@@ -75,14 +74,13 @@ export default function boxRubber ({ canvas, stash }: BoxRubberProps) {
         stash?.renderAll((item, index) => {
             let isInPath = ctx.isPointInPath(x, y)
             if (isInPath) {
-                item[index].dotList.forEach((el, ind) => {
+                item[index].drawList.forEach((el, ind) => {
                     if (el.x >= x - (configure.rubberSize/2) && el.x <= x + (configure.rubberSize/2)) {
                         if (el.y >= y - (configure.rubberSize/2) && el.y <= y + (configure.rubberSize/2)) {
                             el.del = true;
                         }
                     }
                 })
-                console.log(isInPath, item, index, x, y)
             }
 
         });
