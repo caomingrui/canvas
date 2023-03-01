@@ -100,18 +100,18 @@ const boxSelection = (props) => {
 
         // 拖动点
         if (pointMouseMoveState) {
-            const { points } = areas[selectAreaIndex];
-            const oldPointsItem = areas[selectAreaIndex].points[selectPointIndex]
-            points[selectPointIndex].x = oldPointsItem.x + disx - oldDownX;
-            points[selectPointIndex].y = oldPointsItem.y + disy - oldDownY;
+            const { drawList } = areas[selectAreaIndex];
+            const oldPointsItem = areas[selectAreaIndex].drawList[selectPointIndex]
+            drawList[selectPointIndex].x = oldPointsItem.x + disx - oldDownX;
+            drawList[selectPointIndex].y = oldPointsItem.y + disy - oldDownY;
             oldDownX = disx;
             oldDownY = disy;
             drawAll(ctx, areas);
         }
         // 拖动
         else if (!lineStatus) {
-            const { points, closeCoordinate } = areas[selectAreaIndex];
-            points.forEach((p) => {
+            const { drawList, closeCoordinate } = areas[selectAreaIndex];
+            drawList.forEach((p) => {
                 p.x += disx - oldDownX;
                 p.y += disy - oldDownY;
             })
@@ -129,7 +129,7 @@ const boxSelection = (props) => {
             isPointMouseDownState = true;
             drawAll(ctx, areas.map((res, ind) => {
                 if (ind === areas.length - 1) {
-                    return { ...res, points: res.points.concat({x,y,w: 3, h: 3}) }
+                    return { ...res, drawList: res.drawList.concat({x,y,w: 3, h: 3}) }
                 }
                 return res;
             }));
@@ -168,10 +168,10 @@ const boxSelection = (props) => {
         });
     }
 
-    function drawPoint (ctx, { points, add }) {
-        if (!points.length) return;
+    function drawPoint (ctx, { drawList, add }) {
+        if (!drawList.length) return;
         ctx.save();
-        points.forEach(({ x, y, w, h }) => {
+        drawList.forEach(({ x, y, w, h }) => {
             ctx.beginPath();
             ctx.arc(x, y, 4, 0, Math.PI * 2);
             ctx.closePath();
@@ -181,9 +181,9 @@ const boxSelection = (props) => {
         ctx.restore();
     }
 
-    function drawLine (ctx, { points, add, isCloseState, closePointIndex }, movePoint = null) {
-        if (!points.length) return;
-        points.forEach(({ x, y, w, h }, index) => {
+    function drawLine (ctx, { drawList, add, isCloseState, closePointIndex }, movePoint = null) {
+        if (!drawList.length) return;
+        drawList.forEach(({ x, y, w, h }, index) => {
             if (index === 0) {
                 ctx.moveTo(x, y);
             }
@@ -195,7 +195,7 @@ const boxSelection = (props) => {
             ctx.lineTo(movePoint.x, movePoint.y);
         }
         if (isCloseState) {
-            ctx.lineTo(points[closePointIndex].x, points[closePointIndex].y);
+            ctx.lineTo(drawList[closePointIndex].x, drawList[closePointIndex].y);
         }
         ctx.lineWidth = 3
         const num = Math.random() * 5
@@ -206,7 +206,7 @@ const boxSelection = (props) => {
 
 
     function Area () {
-        this.points = [];
+        this.drawList = [];
         // 是否闭合状态
         this.isCloseState = false;
         // 闭合X | y
@@ -216,8 +216,8 @@ const boxSelection = (props) => {
         // 闭合图像
         this.closeImageData = null;
         this.add = (point) => {
-            this.points.push(point);
-            return this.points;
+            this.drawList.push(point);
+            return this.drawList;
         }
     }
 
@@ -283,9 +283,9 @@ function findPointIndex(ctx, areas, x, y) { // 找到当前坐标在哪个区域
 
 
 function clickPointIndex (x, y, area) {
-    const { points } = area;
-    for(let i = 0; i < points.length; i++) {
-        const p = points[i];
+    const { drawList } = area;
+    for(let i = 0; i < drawList.length; i++) {
+        const p = drawList[i];
         //使用勾股定理计算这个点与圆心之间的距离
         const distanceFromCenter = Math.sqrt(Math.pow(p.x - x, 2) + Math.pow(p.y - y, 2));
         if (distanceFromCenter <= 4) {

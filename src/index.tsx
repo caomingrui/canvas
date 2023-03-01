@@ -1,10 +1,10 @@
 import { Button, Popover } from 'antd';
-import {HuaBi, ShuaZi, XiGuan, ZiTi, XiangPi, DiyKuanXuan} from './static/canvasSvgs'
+import {HuaBi, ShuaZi, XiGuan, ZiTi, XiangPi, DiyKuanXuan, BackSvg, SaveSvg, NextSvg} from './static/canvasSvgs'
 import useCanvasDraw from "../hooks/useCanvasDraw";
 import {LegacyRef} from "react";
 
 const Draw = () => {
-    const { updateState, canvasState, canvasRef } = useCanvasDraw({
+    const { updateState, canvasState, canvasRef, backDraw } = useCanvasDraw({
         type: null,
     });
 
@@ -26,6 +26,15 @@ const Draw = () => {
                     <Popover content={FileList} trigger="click">
                         <Button type="text">文件</Button>
                     </Popover>
+                    <Button type="text">
+                        <SaveSvg fontSize={'27px'} onClick={backDraw}/>
+                    </Button>
+                    <Button type="text">
+                        <BackSvg fontSize={'27px'}/>
+                    </Button>
+                    <Button type="text">
+                        <NextSvg fontSize={'27px'}/>
+                    </Button>
                 </div>
             </div>
             <header>

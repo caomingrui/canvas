@@ -5,7 +5,6 @@ export default function boxHuaBi ({ canvas, stash }) {
     const ctx = canvas.getContext('2d');
     let areas = stash?.areas || [], closeState = true;
     let isMouseDown = false, radius = 2;
-    console.log(canvas)
 
     function init () {
         canvas.addEventListener('mousedown', canvasMousedown);
@@ -14,9 +13,11 @@ export default function boxHuaBi ({ canvas, stash }) {
     }
 
     function clean () {
+        console.log('....')
         canvas.removeEventListener('mousedown', canvasMousedown);
         canvas.removeEventListener('mousemove', canvasMousemove);
         canvas.removeEventListener('mouseup', canvasMouseup);
+
     }
 
     function canvasMousedown (event) {
@@ -33,6 +34,7 @@ export default function boxHuaBi ({ canvas, stash }) {
         cleanCanvas({ ctx, canvas });
         stash?.renderAll();
         drawAll({ ctx });
+
     }
 
 
@@ -60,12 +62,22 @@ export default function boxHuaBi ({ canvas, stash }) {
             ctx.beginPath();
             ctx.strokeStyle = "#000";
             ctx.lineWidth = 5;
-            item.dotList.forEach(({x, y, radius}, index) => {
-                if (index === 0) {
-                    ctx.moveTo(x, y);
+            let stashDel = false;
+            item.drawList.forEach(({x, y, radius, del}, index) => {
+                if (del) {
+                    stashDel = true;
                 }
                 else {
-                    ctx.lineTo(x, y);
+                    if (index === 0) {
+                        ctx.moveTo(x, y);
+                    }
+                    else if (stashDel) {
+                        ctx.moveTo(x, y);
+                        stashDel = false;
+                    }
+                    else {
+                        ctx.lineTo(x, y);
+                    }
                 }
             })
             ctx.setLineDash([]);
@@ -75,15 +87,44 @@ export default function boxHuaBi ({ canvas, stash }) {
     }
 
     function Dot () {
-        this.dotList = [];
+        this.drawList = [];
         this.add = (dot) => {
-            this.dotList.push(dot)
+            this.drawList.push(dot)
         }
     }
 
-    function render () {
+    function render (cb = null) {
         ctx.beginPath();
-        drawAll({ ctx });
+        areas.forEach((item, ind) => {
+            ctx.beginPath();
+            ctx.strokeStyle = "#000";
+            ctx.lineWidth = 5;
+            let stashX, stashY;
+            item.drawList.forEach(({x, y, radius, del}, index) => {
+                if (del) {
+                    stashX = x;
+                    stashY = y;
+                }
+                else {
+                    if (index === 0) {
+                        ctx.moveTo(x, y);
+                    }
+                    else if (stashX || stashY) {
+                        ctx.moveTo(x, y);
+                        stashX = null;
+                        stashY = null;
+                    }
+                    else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+
+            })
+            cb && cb(areas, ind)
+            ctx.setLineDash([]);
+            ctx.stroke();
+            ctx.closePath();
+        })
         ctx.closePath();
     }
 

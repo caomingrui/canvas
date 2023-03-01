@@ -1,9 +1,9 @@
 import {useEffect, useReducer, useRef} from "react";
-import boxSelection from "../../utils/draw/boxSelection";
 import type { UseCanvasDrawInitData, CanvasSelectOption, LegalDrawType, UseCanvasDrawReducer } from './type/index';
 import boxHuaBi from "../../utils/draw/boxHuaBi";
-import boxXiangPi from "../../utils/draw/boxXiangPi";
 import useCanvasDrawReducer from "./reducer";
+import boxRubber from "../../utils/draw/boxXiangPi";
+import boxSelection from "../../utils/draw/boxSelection";
 
 let SELECT_TYPE_HUABI = 0;
 let SELECT_TYPE_XIANGPI = 4;
@@ -16,6 +16,8 @@ export default function useCanvasDraw (initData: Partial<UseCanvasDrawInitData>,
         type: 0,
         // 不同类型画布实例
         diffTypeAreas: [],
+        // 点击类型先后 缓存
+        stashTypeList: [],
         ...initData
     });
 
@@ -25,6 +27,7 @@ export default function useCanvasDraw (initData: Partial<UseCanvasDrawInitData>,
         if (state.type === selectState && !selectState) return;
         statusSlot(selectState, state.type);
         dispatch({ type: 'UPDATE_SELECT_STATE', value: selectState });
+        dispatch({ type: 'STASH_TYPE_INDEX', value: selectState })
     }
 
     const updateDiffTypeAreas = <A extends CanvasSelectOption, V = UseCanvasDrawInitData['type']>(diffTypeAreas: A, selectState: V) => {
@@ -32,16 +35,19 @@ export default function useCanvasDraw (initData: Partial<UseCanvasDrawInitData>,
     }
 
     function statusSlot (newType: LegalDrawType, oldType: UseCanvasDrawInitData['type']) {
-        // 操作前清空上一个代理事件
-        oldType && state.diffTypeAreas[oldType]?.clean();
         // 同类型画板缓存 面板数据
         const oldOption = state.diffTypeAreas[newType] || {}, canvas = canvasRef.current;
 
+        if (!canvas) return;
+
+        // 操作前清空上一个代理事件
+        oldType !=null && state.diffTypeAreas[oldType]?.clean();
+
         // 所有类型画板渲染
-        function render (this: { newType: LegalDrawType }) {
-            state.diffTypeAreas.forEach((rl: typeof state.diffTypeAreas, ind: number) => {
+        function render (this: { newType: LegalDrawType }, cb = null) {
+            state.diffTypeAreas.forEach((rl, ind: number) => {
                 if (ind != this.newType) {
-                    rl && rl.render(this)
+                    rl && rl.render(cb)
                 }
             });
         }
@@ -59,7 +65,7 @@ export default function useCanvasDraw (initData: Partial<UseCanvasDrawInitData>,
                 break;
             }
             case SELECT_TYPE_XIANGPI: {
-                option = boxXiangPi({ canvas, stash: oldOption });
+                option = boxRubber({ canvas, stash: oldOption });
                 break;
             }
         }
@@ -69,19 +75,33 @@ export default function useCanvasDraw (initData: Partial<UseCanvasDrawInitData>,
         }
     }
 
+    const backDraw = () => {
+        // let stashTypeList = state.stashTypeList;
+        // let ind = stashTypeList.pop();
+        //
+        // // if (ind == undefined) return;
+        // const option = state.diffTypeAreas[ind] || {};
+        // console.log('///', ind)
+        // option.areas.pop()
+
+    }
+
     useEffect(() => {
         const canvas = canvasRef.current;
         if (canvas) {
             const parentElement = canvas.parentElement || { offsetWidth: 300, offsetHeight: 400 }
             canvas.width = parentElement.offsetWidth;
             canvas.height = parentElement.offsetHeight;
+
+
         }
     }, []);
 
     return {
         updateState,
         canvasState: state,
-        canvasRef
+        canvasRef,
+        backDraw
     };
 }
 

@@ -3,7 +3,7 @@ import {Reducer} from "react";
 export type CanvasSelectOption = {
     init: () => void,
     clean: () => void,
-    render: () => void,
+    render: (cb: any) => void,
     areas: [],
     // 所有渲染函数
     renderAll?: <T extends { newType: UseCanvasDrawInitData['type'] }>(this: T) => void
@@ -17,8 +17,9 @@ export type UseCanvasDrawInitData = {
     // 不同类型画布实例
     diffTypeAreas: CanvasSelectOption[],
 
+    stashTypeList: LegalDrawType[]
 }
 
 
-export type UseCanvasDrawReducer = Reducer<UseCanvasDrawInitData | any, { value: any, type: string } & Record<string, any>>
+export type UseCanvasDrawReducer = Reducer<UseCanvasDrawInitData, { value: any, type: string } & Record<string, any>>
 
