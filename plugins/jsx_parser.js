@@ -91,6 +91,9 @@ const JSXPlugins = (babel) => {
                         if (type.isObjectExpression(value?.expression)) {
                             value = value?.expression
                         }
+                        else if (type.isFunctionExpression(value?.expression)) {
+                            value = value?.expression
+                        }
                         return type.objectProperty(type.identifier(name), value);
                     });
 
@@ -110,7 +113,15 @@ const JSXPlugins = (babel) => {
             JSXExpressionContainer: {
                 exit (path) {
                     const { expression } = path.node;
-                    if (!type.isObjectExpression(expression)) {
+
+                    if (type.isFunctionExpression(expression)) {
+                        console.log(expression, 'function............')
+                    }
+                    else if (type.isObjectExpression(expression)) {
+                        console.log(expression, 'object.............')
+                    }
+                    else {
+                        console.log(expression, '.............')
                         path.replaceWith(
                             type.stringLiteral(`${expression.value}`)
                         )
